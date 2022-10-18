@@ -52,6 +52,9 @@
 
 // ejemplo si quiere usar una macro para cada botón
 #define Boton1 ((PINDC>>PC0)&0x01)
+#define Boton2 ((PINDC>>PC1)&0x01)
+#define Boton3 ((PINDC>>PC2)&0x01)
+#define Boton4 ((PINDC>>PC3)&0x01)
 
 /*********************************************************************************************************
  *** TIPOS DE DATOS PRIVADOS AL MODULO
@@ -110,7 +113,13 @@ uint8_t Tabla_Digitos_7seg[] = { 0x3f, 0x06, 0x5B, 0x4f, 0x66, 0x6D, 0x7C, 0x07,
  *   cuando tienen nombres compuestos
  *   ej: static MEM_POOL  Mem_Pool_Heap; 
 *********************************************************************************************************/
+volatile uint8_t tecla1;
+volatile uint8_t tecla2;
 
+volatile uint8_t antecla1;
+volatile uint8_t antecla2;
+
+volatile uint8_t cont=0;
 
 
 /*********************************************************************************************************
@@ -125,7 +134,17 @@ uint8_t Tabla_Digitos_7seg[] = { 0x3f, 0x06, 0x5B, 0x4f, 0x66, 0x6D, 0x7C, 0x07,
 /*********************************************************************************************************
  *** FUNCIONES PRIVADAS AL MODULO
 *********************************************************************************************************/
+void init_baseboard(void);
 
+void rebote1(void);
+void rebote2(void);
+
+void flanco1(void);
+void flanco2(void);
+
+void mostrar_leds(void);
+
+void clear_leds(void);
 
 
 /*********************************************************************************************************
@@ -141,11 +160,107 @@ uint8_t Tabla_Digitos_7seg[] = { 0x3f, 0x06, 0x5B, 0x4f, 0x66, 0x6D, 0x7C, 0x07,
  	\param [out] 	parametros de salida
 	\return tipo 	y descripcion de retorno
 */
+void init_baseboard()
+{
+	DDRC &= ~(1<<PC0);
+	DDRC &= ~(1<<PC1);
 
+	PORTC&= ~(1<<PC0);
+	PORTC &= ~(1<<PC1);
 
+	DDRD |=(1<<PD2);
+	DDRD |=(1<<PD3);
+	DDRD |=(1<<PD4);
+	DDRD |=(1<<PD5);
+	DDRD |=(1<<PD6);
+	DDRD |=(1<<PD7);
+	DDRB |=(1<<PB0);
+	DDRB |=(1<<PB1);
+}
 
+void rebote1()
+{
+	if(Boton1==0)
+	{
+		_delay_ms(20);
+		if(Boton1==0)
+		{
+          tecla1=1;
+		}
+		else 
+		{
+			tecla1=0;
+		}
+	}
+	else
+	{
+		tecla1=0;
+	}
+}
 
+void rebote2()
+{
+	if(Boton2==0)
+	{
+		_delay_ms(20);
+		if(Boton2==0)
+		{
+          tecla2=1;
+		}
+		else 
+		{
+			tecla2=0;
+		}
+	}
+	else
+	{
+		tecla2=0;
+	}
+}
 
+void flanco()
+{
+	if(tecla1==1 && antecla1==0)
+	{
+		antecla1=!antecla1;
+		cont++;
+		cont%=10;
+	}
+	if(tecla==0 && antecla1==0)
+	{
+		antecla1=!antecla1;
+	}
+}
+
+void flanco2()
+{
+	if(tecla2==1 && antecla2==0)
+	{
+		antecla2=!antecla2;
+		if(cont==0)
+		{
+			cont=9;
+		}
+		else{
+			cont-=1;
+		}
+	}
+	if(tecla2==0 && antecla2==1)
+	{
+		antecla2=!antecla2;
+	}
+}
+
+void mostrar_leds(void)
+{
+	PORTD |=((Tabla_Digitos_7seg[cont]&0x3F)<<2);
+	PORTB |=((Tabla_Digitos_7seg[cont]&0xC0)<<6);
+}
+
+void clear_leds(){
+	PORTD&=0x03;
+	PORTB&=0XFC;
+}
 /*
 
 Respetar este pin out.
@@ -171,12 +286,18 @@ PB1 -> SEGMENTO DP
 */
 int main (void)
 {
- 
+ init_baseboard();
   //! aca se escriben las inicializasiones
 
   while(1)
   {
    //! aca se escribe el programa principal
+   clear_leds();
+   mostrar_leds();
+   rebote1();
+   rebote2();
+   flanco1();
+   flanco2();
   }
 
   return 0;
