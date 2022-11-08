@@ -221,7 +221,7 @@ void flanco1()
 		cont++;
 		cont %= 10;
 	}
-	if (tecla1 == 0 && antecla1 == 0)
+	if (tecla1 == 0 && antecla1 == 1)
 	{
 		antecla1 = !antecla1;
 	}
@@ -238,7 +238,7 @@ void flanco2()
 		}
 		else
 		{
-			cont -= 1;
+			cont --;
 		}
 	}
 	if (tecla2 == 0 && antecla2 == 1)
@@ -250,7 +250,7 @@ void flanco2()
 void mostrar_leds(void)
 {
 	PORTD |= ((Tabla_Digitos_7seg[cont] & 0x3F) << 2);
-	PORTB |= ((Tabla_Digitos_7seg[cont] & 0xC0) << 6);
+	PORTB |= ((Tabla_Digitos_7seg[cont] & 0xC0) >> 6);
 }
 
 void clear_leds()
